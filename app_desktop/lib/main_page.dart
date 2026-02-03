@@ -16,13 +16,26 @@ class _MainPageState extends State<MainPage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Center(
-          child: Text('Login')
+          child: Text('Main Page')
         )
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: .center,
           children: [
+            TextButton(
+              onPressed: () {
+                appData.disconnectFromServer(context);
+              },
+              child: Text("Disconnect")
+            ),
+            SizedBox(height: 5),
+            TextButton(
+              onPressed: () {
+                appData.testToken(context);
+              },
+              child: Text("Test Token")
+            )
           ],
         ),
       ),
