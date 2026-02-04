@@ -108,9 +108,9 @@ class AppData extends ChangeNotifier {
         };
         String settingsString = jsonEncode(settingsData);
         File(settingsPath).writeAsStringSync(settingsString);
-      }
 
-      listUsuaris(apiKey);
+        listUsuaris(apiKey);
+      }
 
       notifyListeners();
 
