@@ -40,48 +40,53 @@ class AppData extends ChangeNotifier {
         saveSettingsData(apiKey, url, email, password);
         
         // Carregar llista d'usuaris
-        await listUsuaris(apiKey);
+        await listUsuaris(apiKey, context);
+      } else {
+        showMessage(context, "Login Failed", "Invalid URL, email, or password.", Colors.red);
       }
 
+      // Notificar canvis
       notifyListeners();
-
     } else {
       showMessage(context, "Warning Error", "All fields must be filled out.", Colors.red);
     }
   }
 
   // GET api/admin/usuaris
-  Future<void> listUsuaris(String apiKey) async {
+  Future<void> listUsuaris(String apiKey, BuildContext context) async {
     List<dynamic> list = [];
 
-    String url = retrieveSettingsData('url');
+    String url = retrieveSettingsData('urlHTTP');
     String urlRequest = "$url/api/admin/usuaris";
     
+    // GET
     var response = await _loadHttpGetByChunks(urlRequest, apiKey);
     if (response != null && response["status"] == "OK") {
+      // Guardar llista d'usuaris no nuls
       list = response["data"];
       userList = list.where((element) => element != null).toList();
 
-      print(userList);
+      // TODO: mostrar llista d'usuaris a la MainPage
     } else {
-      print("Error del servidor (appData/listUsuaris)");
+      showMessage(context, "Error", "Failed to retrieve user list.", Colors.red);
     }
   }
 
   // POST api/admin/usuaris/logout
   Future<void> disconnectFromServer(BuildContext context) async {
+    // Recuperar dades abans de netejar-les
     String apiKey = retrieveSettingsData('token');
-    clearSettingsData();
+    String url = retrieveSettingsData('urlHTTPS');
+    
 
-    // POST
-    String url = "https://uxia2.ieti.site/api/admin/usuaris/logout";
-    String jsonString = "{}";
-    var jsonResponse = await _loadHttpPostByChunks(url, jsonString, apiKey);
+    String urlRequest = "$url/api/admin/usuaris/logout";
+    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey);
     if (jsonResponse != null && jsonResponse["status"] == "OK") {
-      print("Logout correcto. (Token válido)");
+      showMessage(context, "Logout", "You have been successfully logged out.", Colors.green);
+      clearSettingsData();
       changeToLoginPage(context);
     } else {
-      print("Error en el logout. (Token inválido)");
+      showMessage(context, "Error", "Logout failed. Invalid token.", Colors.red);
     }
     notifyListeners();
   }
@@ -89,11 +94,10 @@ class AppData extends ChangeNotifier {
   // POST api/admin/usuaris/testtoken
   Future<void> testToken(BuildContext context) async {
     String apiKey = retrieveSettingsData('token');
-    String url = retrieveSettingsData('url');
+    String url = retrieveSettingsData('urlHTTPS');
 
     String urlRequest = "$url/api/admin/usuaris/testtoken";
-    String jsonString = "{}";
-    var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, apiKey);
+    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey);
     if (jsonResponse != null && jsonResponse["status"] == "OK") {
       showMessage(context, "Valid Token", "The token is valid.", Colors.green);
     } else {
@@ -102,6 +106,12 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
+  // POST api/admin/usuaris/afegir
+
+  // POST api/admin/usuaris/eliminar
+
+  // POST api/admin/usuaris/modificar
+
   //======================//
   // Gestió settings.json //
   //======================//
@@ -109,7 +119,8 @@ class AppData extends ChangeNotifier {
   void saveSettingsData(String token, String url, String email, String password) {
     Map<String, String> settingsData = {
       'token': token,
-      'url': url,
+      'urlHTTPS': url,
+      'urlHTTP': url.replaceAll("https://", "http://"),
       'email': email,
       'password': password,
     };
@@ -171,7 +182,7 @@ class AppData extends ChangeNotifier {
   }
 
   // Petició POST, amb o sense autenticació
-  Future<Map<String, dynamic>?> _loadHttpPostByChunks(String url, String jsonString, String? apiKey) async {
+  Future<Map<String, dynamic>?> _loadHttpPostByChunks(String url, String jsonString, String? apiKey, BuildContext context) async {
     try {
       http.Response response;
       if (apiKey != null) {
@@ -179,7 +190,7 @@ class AppData extends ChangeNotifier {
         Uri.parse(url),
           headers: {
             'Content-Type': 'application/json',
-            'x-api-key': '$apiKey',
+            'x-api-key': apiKey,
           },
           body: jsonString,
         );
@@ -193,20 +204,19 @@ class AppData extends ChangeNotifier {
         );
       }
       if (response.statusCode == 200) {
-        print('RESPONSE: ${response.body}');
         return jsonDecode(response.body);
       } else {
-        print("Error del servidor (appData/loadHttpPostByChunks): ${response.statusCode} \n${response.body}");
+        showMessage(context, "Server Error", "Status code: ${response.statusCode}\n${response.body}", Colors.red);
         return null;
       }
     } catch (e) {
-      print("Excepción (appData/loadHttpPostByChunks): $e");
+      showMessage(context, "Client Exception", "Exception in loadHttpPostByChunks: $e", Colors.red);
       return null;
     }
   }
 
   // Petició GET, amb o sense autenticació
-  Future<Map<String, dynamic>?> _loadHttpGetByChunks(String url, String? apiKey) async {
+  Future<Map<String, dynamic>?> _loadHttpGetByChunks(String url, String? apiKey, BuildContext context) async {
     try {
       http.Response response;
       if (apiKey != null) {
@@ -214,7 +224,7 @@ class AppData extends ChangeNotifier {
         Uri.parse(url),
           headers: {
             'Content-Type': 'application/json',
-            'x-api-key': '$apiKey',
+            'x-api-key': apiKey,
           },
         );
       } else {
@@ -226,14 +236,13 @@ class AppData extends ChangeNotifier {
         );
       }
       if (response.statusCode == 200) {
-        print('RESPONSE: ${response.body}');
         return jsonDecode(response.body);
       } else {
-        print("Error del servidor (appData/loadHttpGetByChunks): ${response.reasonPhrase}");
+        showMessage(context, "Server Error", "Status code: ${response.statusCode}\n${response.body}", Colors.red);
         return null;
       }
     } catch (e) {
-      print("Excepción (appData/loadHttpGetByChunks): $e");
+      showMessage(context, "Client Exception", "Exception in loadHttpGetByChunks: $e", Colors.red);
       return null;
     }
   }
