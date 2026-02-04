@@ -13,8 +13,164 @@ class AppData extends ChangeNotifier {
   double textFieldHeight = 40;
 
   List<dynamic> userList = [];
+
+  //================//
+  // Peticions HTTP //
+  //================//
   
-  // Funció auxiliar per fer peticions POST, amb o sense autenticació
+  // POST api/admin/usuaris/login
+  Future<void> connectToServer(String url, String email, String password, BuildContext context) async {
+    if (!(url.isEmpty || email.isEmpty || password.isEmpty)) {
+      // Preparar JSON
+      Map<String, String> jsonData = {
+        'email': email,
+        'password': password,
+      };
+      String jsonString = jsonEncode(jsonData);
+      
+      // POST
+      String urlRequest = "$url/api/admin/usuaris/login";
+      var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, null);
+      if (jsonResponse != null && jsonResponse["status"] == "OK") {
+        // Canviar a MainPage
+        changeToMainPage(context);
+
+        // Guardar dades de configuració
+        String apiKey = jsonResponse["data"]["token"];
+        saveSettingsData(apiKey, url, email, password);
+        
+        // Carregar llista d'usuaris
+        await listUsuaris(apiKey);
+      }
+
+      notifyListeners();
+
+    } else {
+      showMessage(context, "Warning Error", "All fields must be filled out.", Colors.red);
+    }
+  }
+
+  // GET api/admin/usuaris
+  Future<void> listUsuaris(String apiKey) async {
+    List<dynamic> list = [];
+
+    String url = retrieveSettingsData('url');
+    String urlRequest = "$url/api/admin/usuaris";
+    
+    var response = await _loadHttpGetByChunks(urlRequest, apiKey);
+    if (response != null && response["status"] == "OK") {
+      list = response["data"];
+      userList = list.where((element) => element != null).toList();
+
+      print(userList);
+    } else {
+      print("Error del servidor (appData/listUsuaris)");
+    }
+  }
+
+  // POST api/admin/usuaris/logout
+  Future<void> disconnectFromServer(BuildContext context) async {
+    String apiKey = retrieveSettingsData('token');
+    clearSettingsData();
+
+    // POST
+    String url = "https://uxia2.ieti.site/api/admin/usuaris/logout";
+    String jsonString = "{}";
+    var jsonResponse = await _loadHttpPostByChunks(url, jsonString, apiKey);
+    if (jsonResponse != null && jsonResponse["status"] == "OK") {
+      print("Logout correcto. (Token válido)");
+      changeToLoginPage(context);
+    } else {
+      print("Error en el logout. (Token inválido)");
+    }
+    notifyListeners();
+  }
+
+  // POST api/admin/usuaris/testtoken
+  Future<void> testToken(BuildContext context) async {
+    String apiKey = retrieveSettingsData('token');
+    String url = retrieveSettingsData('url');
+
+    String urlRequest = "$url/api/admin/usuaris/testtoken";
+    String jsonString = "{}";
+    var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, apiKey);
+    if (jsonResponse != null && jsonResponse["status"] == "OK") {
+      showMessage(context, "Valid Token", "The token is valid.", Colors.green);
+    } else {
+      showMessage(context, "Invalid Token", "The token is invalid.", Colors.red);
+    }
+    notifyListeners();
+  }
+
+  //======================//
+  // Gestió settings.json //
+  //======================//
+
+  void saveSettingsData(String token, String url, String email, String password) {
+    Map<String, String> settingsData = {
+      'token': token,
+      'url': url,
+      'email': email,
+      'password': password,
+    };
+    String settingsString = jsonEncode(settingsData);
+    File(settingsPath).writeAsStringSync(settingsString);
+  }
+  
+  String retrieveSettingsData(String key) {
+    String settingsString = File(settingsPath).readAsStringSync();
+    Map<String, dynamic> settingsData = jsonDecode(settingsString);
+    return settingsData[key];
+  }
+  
+  void clearSettingsData() {
+    Map<String, String> settingsData = {
+        'token': "", 
+        'url': "",
+        'email': "",
+        'password': "",
+    };
+    String settingsString = jsonEncode(settingsData);
+    File(settingsPath).writeAsStringSync(settingsString);
+}
+
+  //====================//
+  // Funcions Auxiliars //
+  //====================//
+
+  // Canvis de pàgina
+  void changeToMainPage(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => MainPage()),
+    );
+  }
+
+  void changeToLoginPage(BuildContext context) {
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  // Missatge emergent
+  void showMessage(BuildContext context, String title, String message, Color titleColor) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          title,
+          style: TextStyle(color: titleColor),
+        ),
+        content: Text(message),
+        actions: [
+          TextButton(
+            child: Text("OK"),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Petició POST, amb o sense autenticació
   Future<Map<String, dynamic>?> _loadHttpPostByChunks(String url, String jsonString, String? apiKey) async {
     try {
       http.Response response;
@@ -49,7 +205,7 @@ class AppData extends ChangeNotifier {
     }
   }
 
-  // Funció auxiliar per fer peticions GET, amb o sense autenticació
+  // Petició GET, amb o sense autenticació
   Future<Map<String, dynamic>?> _loadHttpGetByChunks(String url, String? apiKey) async {
     try {
       http.Response response;
@@ -82,204 +238,4 @@ class AppData extends ChangeNotifier {
     }
   }
 
-  Future<void> connectToServer(String url, String email, String password, BuildContext context) async {
-    if (!(url.isEmpty || email.isEmpty || password.isEmpty)) {
-      // Preparar JSON
-      Map<String, String> jsonData = {
-        'email': email,
-        'password': password,
-      };
-      String jsonString = jsonEncode(jsonData);
-      
-      String urlFinal = "$url/api/admin/usuaris/login";
-
-      // POST
-      var jsonResponse = await _loadHttpPostByChunks(urlFinal, jsonString, null);
-      
-      if (jsonResponse != null && jsonResponse["status"] == "OK") {
-        // Anar a pàgina principal
-        changeToMainPage(context);
-
-        // Guardar token en settings.json
-        apiKey = jsonResponse["data"]["token"];
-        Map<String, String> settingsData = {
-          'token': apiKey,
-          'url': url,
-          'email': email,
-          'password': password,
-        };
-        String settingsString = jsonEncode(settingsData);
-        File(settingsPath).writeAsStringSync(settingsString);
-
-        listUsuaris(apiKey);
-      }
-
-      notifyListeners();
-
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text(
-            "Warning Error",
-            style: TextStyle(color: Colors.red),
-          ),
-          content: const Text("All fields must be filled out."),
-          actions: [
-            TextButton(
-              child: Text("OK"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
-  Future<void> listUsuaris(String apiKey) async {
-    Map<String, dynamic> jsonResponse;
-    Map<String, dynamic> jsonData;
-    
-    List<dynamic> list = [];
-    String url = "http://uxia2.ieti.site/api/admin/usuaris";
-    
-    var response = await _loadHttpGetByChunks(url, apiKey);
-
-    if (response != null && response["status"] == "OK") {
-      list = response["data"];
-      userList = list.where((element) => element != null).toList();
-
-      print(userList);
-    } else {
-      print("Error del servidor (appData/listUsuaris)");
-    }
-  }
-
-  void changeToMainPage(BuildContext context) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => MainPage()),
-    );
-  }
-
-  Future<void> disconnectFromServer(BuildContext context) async {
-    // Obtenir token de settings.json
-    String settingsString = File(settingsPath).readAsStringSync();
-    Map<String, dynamic> settingsData = jsonDecode(settingsString);
-    String apiKey = settingsData['token'];
-
-    // Netejar settings.json
-    settingsData = {'token': ""};
-    settingsString = jsonEncode(settingsData);
-    File(settingsPath).writeAsStringSync(settingsString);
-
-    // POST
-    String url = "http://uxia2.ieti.site/api/admin/usuaris/logout";
-    String jsonString = "{}";
-    var jsonResponse = await _loadHttpPostByChunks(url, jsonString, apiKey);
-    if (jsonResponse != null && jsonResponse["status"] == "OK") {
-      print("Logout correcto. (Token válido)");
-      changeToLoginPage(context);
-    } else {
-      print("Error en el logout. (Token inválido)");
-    }
-    notifyListeners();
-  }
-
-  void changeToLoginPage(BuildContext context) {
-    Navigator.of(context).popUntil((route) => route.isFirst);
-  }
-
-  Future<void> testToken(BuildContext context) async {
-    // Obtener token de settings.json
-    String settingsString = File(settingsPath).readAsStringSync();
-    Map<String, dynamic> settingsData = jsonDecode(settingsString);
-    String apiKey = settingsData['token'];
-
-    // Petición HTTP a servidor (.../api/admin/usuaris/testtoken)
-    String url = "http://uxia2.ieti.site/api/admin/usuaris/testtoken";
-    String jsonString = "{}";
-    var jsonResponse = await _loadHttpPostByChunks(url, jsonString, apiKey);
-    if (jsonResponse != null && jsonResponse["status"] == "OK") {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text(
-            "Valid Token",
-            style: TextStyle(color: Colors.green),
-          ),
-          content: const Text("The token is valid."),
-          actions: [
-            TextButton(
-              child: Text("OK"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-      );
-    } else {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text(
-            "Invalid Token",
-            style: TextStyle(color: Colors.red),
-          ),
-          content: const Text("The token is invalid."),
-          actions: [
-            TextButton(
-              child: Text("OK"),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-        ),
-      );
-    }
-    notifyListeners();
-  }
-
-
-  
-  /*
-  Future<void> _getList() async {
-    var completer = Completer<void>();
-
-    Map<String, dynamic> jsonResponse;
-    Map<String, dynamic> jsonData;
-    
-    List<dynamic> list = [];
-    String url = "http://uxia2.ieti.site/api/users/admin_get_list";
-    try {
-      var response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json', 
-          'Authorization': 'Bearer $apiKey'
-        }
-      );
-
-      if (response.statusCode == 200) {
-        // La solicitud ha sido exitosa
-        /// print('RESPONSE: ${response.body}');
-        jsonResponse = jsonDecode(response.body);
-        if (jsonResponse["status"] == "OK") {
-          list = jsonResponse["data"];
-          userList = list.where((element) => element != null).toList();
-        }
-
-        completer.complete();
-      } else {
-        // La solicitud ha fallado
-        completer.completeError(
-            "Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
-      }
-    } catch (e) {
-      completer.completeError("Excepción (appData/loadHttpPostByChunks): $e");
-    }
-
-    return completer.future;
-    
-
-  }
-  */
 }
