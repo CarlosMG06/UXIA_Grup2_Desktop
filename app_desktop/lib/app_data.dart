@@ -40,7 +40,7 @@ class AppData extends ChangeNotifier {
         print('RESPONSE: ${response.body}');
         return jsonDecode(response.body);
       } else {
-        print("Error del servidor (appData/loadHttpPostByChunks): ${response.statusCode} ${response.reasonPhrase}");
+        print("Error del servidor (appData/loadHttpPostByChunks): ${response.statusCode} \n${response.body}");
         return null;
       }
     } catch (e) {
@@ -91,8 +91,10 @@ class AppData extends ChangeNotifier {
       };
       String jsonString = jsonEncode(jsonData);
       
+      String urlFinal = "$url/api/admin/usuaris/login";
+
       // POST
-      var jsonResponse = await _loadHttpPostByChunks(url, jsonString, null);
+      var jsonResponse = await _loadHttpPostByChunks(urlFinal, jsonString, null);
       
       if (jsonResponse != null && jsonResponse["status"] == "OK") {
         // Anar a pàgina principal
