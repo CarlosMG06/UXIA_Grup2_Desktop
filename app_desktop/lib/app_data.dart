@@ -58,7 +58,7 @@ class AppData extends ChangeNotifier {
         Uri.parse(url),
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'Bearer $apiKey',
+            'x-api-key': '$apiKey',
           },
         );
       } else {
