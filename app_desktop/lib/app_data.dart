@@ -40,7 +40,7 @@ class AppData extends ChangeNotifier {
         print('RESPONSE: ${response.body}');
         return jsonDecode(response.body);
       } else {
-        print("Error del servidor (appData/loadHttpPostByChunks): ${response.reasonPhrase}");
+        print("Error del servidor (appData/loadHttpPostByChunks): ${response.statusCode} ${response.reasonPhrase}");
         return null;
       }
     } catch (e) {
