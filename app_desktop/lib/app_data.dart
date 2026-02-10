@@ -30,7 +30,7 @@ class AppData extends ChangeNotifier {
       
       // POST
       String urlRequest = "$url/api/admin/usuaris/login";
-      var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, null);
+      var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, null, context);
       if (jsonResponse != null && jsonResponse["status"] == "OK") {
         // Canviar a MainPage
         changeToMainPage(context);
@@ -60,13 +60,16 @@ class AppData extends ChangeNotifier {
     String urlRequest = "$url/api/admin/usuaris";
     
     // GET
-    var response = await _loadHttpGetByChunks(urlRequest, apiKey);
+    var response = await _loadHttpGetByChunks(urlRequest, apiKey, context);
     if (response != null && response["status"] == "OK") {
       // Guardar llista d'usuaris no nuls
       list = response["data"];
       userList = list.where((element) => element != null).toList();
 
       // TODO: mostrar llista d'usuaris a la MainPage
+
+
+      notifyListeners();
     } else {
       showMessage(context, "Error", "Failed to retrieve user list.", Colors.red);
     }
@@ -80,7 +83,7 @@ class AppData extends ChangeNotifier {
     
 
     String urlRequest = "$url/api/admin/usuaris/logout";
-    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey);
+    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey, context);
     if (jsonResponse != null && jsonResponse["status"] == "OK") {
       showMessage(context, "Logout", "You have been successfully logged out.", Colors.green);
       clearSettingsData();
@@ -97,7 +100,7 @@ class AppData extends ChangeNotifier {
     String url = retrieveSettingsData('urlHTTPS');
 
     String urlRequest = "$url/api/admin/usuaris/testtoken";
-    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey);
+    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey, context);
     if (jsonResponse != null && jsonResponse["status"] == "OK") {
       showMessage(context, "Valid Token", "The token is valid.", Colors.green);
     } else {
