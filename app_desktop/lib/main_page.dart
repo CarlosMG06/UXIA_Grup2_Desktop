@@ -10,7 +10,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
-    AppData appData = Provider.of<AppData>(context, listen: false);
+    AppData appData = Provider.of<AppData>(context, listen: true);
 
     return Scaffold(
       appBar: AppBar(
@@ -81,13 +81,13 @@ class _MainPageState extends State<MainPage> {
                         ),
                         Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text(user['user_id'].toString(), textAlign: .center),
+                        child: Text(user['email'].toString(), textAlign: .center),
                         ),
                         TextButton(
                           onPressed: () {
                             appData.eliminarUsuari(user['user_id'], context);
                           },
-                          child: Text("Eliminar")
+                          child: Text("Remove")
                         ),
                       ],
                     );

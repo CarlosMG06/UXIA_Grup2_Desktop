@@ -98,7 +98,6 @@ class AppData extends ChangeNotifier {
   // POST api/admin/usuaris/testtoken
   Future<void> testToken(BuildContext context) async {
     String apiKey = retrieveSettingsData('token');
-    print(apiKey); // Debug
     String url = retrieveSettingsData('urlHTTPS');
 
     String urlRequest = "$url/api/admin/usuaris/testtoken";
@@ -126,7 +125,7 @@ class AppData extends ChangeNotifier {
         showMessage(context, "Add User", "User added successfully.", Colors.green);
         
         // Actualitzar llista d'usuaris amb les dades default de la BBDD
-        listUsuaris(context);
+        await listUsuaris(context);
 
         notifyListeners();
       } else {
@@ -138,7 +137,6 @@ class AppData extends ChangeNotifier {
   // POST api/admin/usuaris/remove
   Future<void> eliminarUsuari(int userId, BuildContext context) async {
     String apiKey = retrieveSettingsData('token');
-    print(apiKey); // Debug
     String url = retrieveSettingsData('urlHTTPS');
 
     Map<String, String> jsonData = {
@@ -157,7 +155,7 @@ class AppData extends ChangeNotifier {
       notifyListeners();
     } else {
       showMessage(context, "Error", "Failed to remove user.", Colors.red);
-    }
+    } 
   }
 
   //======================//
