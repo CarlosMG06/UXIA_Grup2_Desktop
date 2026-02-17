@@ -19,6 +19,9 @@ class AppData extends ChangeNotifier {
   //================//
   
   // POST api/admin/usuaris/login
+
+  // admin@domain.com
+  // admin123
   Future<void> connectToServer(String url, String email, String password, BuildContext context) async {
     if (!(url.isEmpty || email.isEmpty || password.isEmpty)) {
       // Preparar JSON
@@ -97,10 +100,11 @@ class AppData extends ChangeNotifier {
   // POST api/admin/usuaris/testtoken
   Future<void> testToken(BuildContext context) async {
     String apiKey = retrieveSettingsData('token');
+    print(apiKey); //
     String url = retrieveSettingsData('urlHTTPS');
 
     String urlRequest = "$url/api/admin/usuaris/testtoken";
-    var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey, context);
+    var jsonResponse = await _loadHttpGetByChunks(urlRequest, apiKey, context);
     if (jsonResponse != null && jsonResponse["status"] == "OK") {
       showMessage(context, "Valid Token", "The token is valid.", Colors.green);
     } else {
