@@ -45,7 +45,7 @@ class _LoginState extends State<Login> {
               ),
             ),
             SizedBox(height: 5),
-            Text("Password"),
+            const Text("Password"),
             SizedBox(
               height: appData.textFieldHeight,
               width: appData.textFieldWidth,

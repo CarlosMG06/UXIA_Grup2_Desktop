@@ -70,9 +70,6 @@ class AppData extends ChangeNotifier {
       list = response["data"];
       userList = list.where((element) => element != null).toList();
 
-      // TODO: mostrar llista d'usuaris a la MainPage
-
-
       notifyListeners();
     } else {
       showMessage(context, "Error", "Failed to retrieve user list.", Colors.red);
@@ -101,7 +98,7 @@ class AppData extends ChangeNotifier {
   // POST api/admin/usuaris/testtoken
   Future<void> testToken(BuildContext context) async {
     String apiKey = retrieveSettingsData('token');
-    print(apiKey); //
+    print(apiKey); // Debug
     String url = retrieveSettingsData('urlHTTPS');
 
     String urlRequest = "$url/api/admin/usuaris/testtoken";
@@ -114,14 +111,54 @@ class AppData extends ChangeNotifier {
     notifyListeners();
   }
 
-  // POST api/admin/usuaris/afegir
+  // POST api/admin/usuaris/add
   Future<void> afegirUsuari(BuildContext context) async {
+    String apiKey = retrieveSettingsData('token');
+    String url = retrieveSettingsData('urlHTTPS');
 
+    String urlRequest = "$url/api/admin/usuaris/add";
+
+    final jsonData = await showAddUserMessage(context);
+    if (jsonData != null) {
+      String jsonString = jsonEncode(jsonData);
+      var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, apiKey, context);
+      if (jsonResponse != null && jsonResponse["status"] == "OK") {
+        showMessage(context, "Add User", "User added successfully.", Colors.green);
+        
+        // Actualitzar llista d'usuaris amb les dades default de la BBDD
+        listUsuaris(context);
+
+        notifyListeners();
+      } else {
+        showMessage(context, "Error", "Failed to add user.", Colors.red);
+      }
+    }
   }
 
-  // POST api/admin/usuaris/eliminar
+  // POST api/admin/usuaris/remove
+  Future<void> eliminarUsuari(int userId, BuildContext context) async {
+    String apiKey = retrieveSettingsData('token');
+    print(apiKey); // Debug
+    String url = retrieveSettingsData('urlHTTPS');
 
-  // POST api/admin/usuaris/modificar
+    Map<String, String> jsonData = {
+      'user_id': userId.toString()
+    };
+    String jsonString = jsonEncode(jsonData);
+
+    String urlRequest = "$url/api/admin/usuaris/remove";
+    var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, apiKey, context);
+    if (jsonResponse != null && jsonResponse["status"] == "OK") {
+      showMessage(context, "Remove User", "User removed succesfully.", Colors.green);
+
+      // Treure de la llista
+      userList.removeWhere((user) => user['user_id'] == userId);
+
+      notifyListeners();
+    } else {
+      showMessage(context, "Error", "Failed to remove user.", Colors.red);
+    }
+  }
 
   //======================//
   // Gestió settings.json //
@@ -192,6 +229,72 @@ class AppData extends ChangeNotifier {
     );
   }
 
+  // Missatge emergent per afegir un usuari
+  Future<Map<String, dynamic>?> showAddUserMessage(BuildContext context) async {
+    final TextEditingController controllerId = TextEditingController();
+    final TextEditingController controllerNickname = TextEditingController();
+    final TextEditingController controllerEmail = TextEditingController();
+
+    final result = await showDialog(
+      context: context, 
+      builder: (context) => AlertDialog(
+        title: Text("Add User"),
+        content: Column(
+          children: [
+            const Text('ID'),
+            SizedBox(
+              height: textFieldHeight,
+              width: textFieldWidth,
+              child: TextField(
+                controller: controllerId,
+              ),
+            ),
+            SizedBox(height: 5),
+            const Text('Nickname'),
+            SizedBox(
+              height: textFieldHeight,
+              width: textFieldWidth,
+              child: TextField(
+                controller: controllerNickname,
+              ),
+            ),
+            SizedBox(height: 5),
+            const Text("Email"),
+            SizedBox(
+              height: textFieldHeight,
+              width: textFieldWidth,
+              child: TextField(
+                controller: controllerEmail,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              final userData = {
+                "user_id": controllerId.text,
+                "nickname": controllerNickname.text,
+                "email": controllerEmail.text
+              };
+              Navigator.pop(context, userData);
+            },
+            child: const Text("Add"))
+        ],
+      ));
+
+    controllerId.dispose();
+    controllerNickname.dispose();
+    controllerEmail.dispose();
+
+    return result;
+  }
   // Petició POST, amb o sense autenticació
   Future<Map<String, dynamic>?> _loadHttpPostByChunks(String url, String jsonString, String? apiKey, BuildContext context) async {
     try {

@@ -44,7 +44,7 @@ class _MainPageState extends State<MainPage> {
                   onPressed: () {
                     appData.listUsuaris(context);
                   }, 
-                  child: Text("List Users")
+                  child: Text("Update User List")
                 )
               ],
             ),
@@ -66,8 +66,13 @@ class _MainPageState extends State<MainPage> {
                       padding: EdgeInsets.all(8.0),
                       child: Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Actions", style: TextStyle(fontStyle: FontStyle.italic)),
+                    ),
                   ]
                 ),
+                // Mostrar llista d'usuaris dinàmicament
                 if (appData.userList.isNotEmpty)
                   ...appData.userList.map((user) {
                     return TableRow(
@@ -75,6 +80,12 @@ class _MainPageState extends State<MainPage> {
                         Text(user['user_id'].toString()),
                         Text(user['nickname']?.toString() ?? ''),
                         Text(user['email']?.toString() ?? ''),
+                        TextButton(
+                          onPressed: () {
+                            appData.eliminarUsuari(user['user_id'], context);
+                          },
+                          child: Text("Eliminar")
+                        ),
                       ],
                     );
                   })
