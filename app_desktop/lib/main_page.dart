@@ -50,19 +50,19 @@ class _MainPageState extends State<MainPage> {
                   children: [
                     Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Text("ID", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text("ID", style: TextStyle(fontWeight: .bold), textAlign: .center),
                     ),
                     Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Text("Nickname", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text("Nickname", style: TextStyle(fontWeight: .bold), textAlign: .center),
                     ),
                     Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: Text("Email", style: TextStyle(fontWeight: .bold), textAlign: .center),
                     ),
                     Padding(
                       padding: EdgeInsets.all(8.0),
-                      child: Text("Actions", style: TextStyle(fontStyle: FontStyle.italic)),
+                      child: Text("Actions", style: TextStyle(fontStyle: .italic), textAlign: .center),
                     ),
                   ]
                 ),
@@ -73,15 +73,15 @@ class _MainPageState extends State<MainPage> {
                       children: [
                         Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text(user['user_id'].toString(), textAlign: TextAlign.center),
+                        child: Text(user['user_id'].toString(), textAlign: .center),
                         ),
                         Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text(user['nickname'].toString(), textAlign: TextAlign.center),
+                        child: Text(user['nickname'].toString(), textAlign: .center),
                         ),
                         Padding(
                         padding: EdgeInsets.all(8.0),
-                        child: Text(user['user_id'].toString(), textAlign: TextAlign.center),
+                        child: Text(user['user_id'].toString(), textAlign: .center),
                         ),
                         TextButton(
                           onPressed: () {
