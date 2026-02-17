@@ -126,8 +126,6 @@ class AppData extends ChangeNotifier {
         
         // Actualitzar llista d'usuaris amb les dades default de la BBDD
         await listUsuaris(context);
-
-        notifyListeners();
       } else {
         showMessage(context, "Error", "Failed to add user.", Colors.red);
       }
