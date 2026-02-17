@@ -23,18 +23,79 @@ class _MainPageState extends State<MainPage> {
         child: Column(
           mainAxisAlignment: .center,
           children: [
-            TextButton(
-              onPressed: () {
-                appData.disconnectFromServer(context);
-              },
-              child: Text("Disconnect")
+            Row(
+              mainAxisAlignment: .center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    appData.disconnectFromServer(context);
+                  },
+                  child: Text("Disconnect")
+                ),
+                SizedBox(width: 10),
+                TextButton(
+                  onPressed: () {
+                    appData.testToken(context);
+                  },
+                  child: Text("Test Token")
+                ),
+                SizedBox(width: 10),
+                TextButton(
+                  onPressed: () {
+                    appData.listUsuaris(context);
+                  }, 
+                  child: Text("List Users")
+                )
+              ],
             ),
-            SizedBox(height: 5),
-            TextButton(
-              onPressed: () {
-                appData.testToken(context);
-              },
-              child: Text("Test Token")
+            Table(
+              border: TableBorder.all(),
+              defaultColumnWidth:IntrinsicColumnWidth(),
+              children: [
+                const TableRow(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("ID", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Nickname", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Email", style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ]
+                ),
+                if (appData.userList.isNotEmpty)
+                  ...appData.userList.map((user) {
+                    return TableRow(
+                      children: [
+                        Text(user['user_id'].toString()),
+                        Text(user['nickname']?.toString() ?? ''),
+                        Text(user['email']?.toString() ?? ''),
+                      ],
+                    );
+                  })
+                else
+                  const TableRow(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      )
+                    ],
+                  ),
+              ],
             )
           ],
         ),

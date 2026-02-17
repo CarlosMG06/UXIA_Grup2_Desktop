@@ -43,7 +43,7 @@ class AppData extends ChangeNotifier {
         saveSettingsData(apiKey, url, email, password);
         
         // Carregar llista d'usuaris
-        await listUsuaris(apiKey, context);
+        await listUsuaris(context);
       } else {
         showMessage(context, "Login Failed", "Invalid URL, email, or password.", Colors.red);
       }
@@ -56,9 +56,10 @@ class AppData extends ChangeNotifier {
   }
 
   // GET api/admin/usuaris
-  Future<void> listUsuaris(String apiKey, BuildContext context) async {
+  Future<void> listUsuaris(BuildContext context) async {
     List<dynamic> list = [];
 
+    String apiKey = retrieveSettingsData('token');
     String url = retrieveSettingsData('urlHTTP');
     String urlRequest = "$url/api/admin/usuaris";
     
@@ -114,6 +115,9 @@ class AppData extends ChangeNotifier {
   }
 
   // POST api/admin/usuaris/afegir
+  Future<void> afegirUsuari(BuildContext context) async {
+
+  }
 
   // POST api/admin/usuaris/eliminar
 
