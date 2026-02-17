@@ -71,9 +71,18 @@ class _MainPageState extends State<MainPage> {
                   ...appData.userList.map((user) {
                     return TableRow(
                       children: [
-                        Text(user['user_id'].toString()),
-                        Text(user['nickname']?.toString() ?? ''),
-                        Text(user['email']?.toString() ?? ''),
+                        Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(user['user_id'].toString(), textAlign: TextAlign.center),
+                        ),
+                        Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(user['nickname'].toString(), textAlign: TextAlign.center),
+                        ),
+                        Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text(user['user_id'].toString(), textAlign: TextAlign.center),
+                        ),
                         TextButton(
                           onPressed: () {
                             appData.eliminarUsuari(user['user_id'], context);
