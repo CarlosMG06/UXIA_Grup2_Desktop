@@ -107,7 +107,12 @@ class _MainPageState extends State<MainPage> {
                     ],
                   ),
               ],
-            )
+            ),
+            TextButton(
+              onPressed: () {
+                appData.afegirUsuari(context);
+              }, child: Text("Add")
+            ),
           ],
         ),
       ),
