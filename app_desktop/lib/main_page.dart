@@ -103,7 +103,11 @@ class _MainPageState extends State<MainPage> {
                       Padding(
                         padding: EdgeInsets.all(8.0),
                         child: Text('No users found', textAlign: TextAlign.center),
-                      )
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      ),
                     ],
                   ),
               ],
