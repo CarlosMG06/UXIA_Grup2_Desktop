@@ -39,15 +39,9 @@ class _MainPageState extends State<MainPage> {
                   },
                   child: Text("Test Token")
                 ),
-                SizedBox(width: 10),
-                TextButton(
-                  onPressed: () {
-                    appData.listUsuaris(context);
-                  }, 
-                  child: Text("Update User List")
-                )
               ],
             ),
+            SizedBox(height: 50),
             Table(
               border: TableBorder.all(),
               defaultColumnWidth:IntrinsicColumnWidth(),
@@ -112,11 +106,23 @@ class _MainPageState extends State<MainPage> {
                   ),
               ],
             ),
-            TextButton(
-              onPressed: () {
-                appData.afegirUsuari(context);
-              }, child: Text("Add")
-            ),
+            Row(
+              mainAxisAlignment: .center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    appData.listUsuaris(context);
+                  }, 
+                  child: Text("Update User List")
+                ),
+                SizedBox(width: 10),
+                TextButton(
+                  onPressed: () {
+                    appData.afegirUsuari(context);
+                  }, child: Text("Add")
+                ),
+              ],
+            )
           ],
         ),
       ),
