@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:app_desktop/app_data.dart';
 
 class MainPage extends StatefulWidget {
+  const MainPage({super.key});
+
   @override
   State<MainPage> createState() => _MainPageState();
 }
@@ -10,7 +12,7 @@ class MainPage extends StatefulWidget {
 class _MainPageState extends State<MainPage> {
   @override
   Widget build(BuildContext context) {
-    // AppData appData = Provider.of<AppData>(context, listen: true);
+    AppData appData = Provider.of<AppData>(context, listen: false);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,125 +22,142 @@ class _MainPageState extends State<MainPage> {
         )
       ),
       body: Center(
-        child: Consumer<AppData>(
-          builder: (context, appData, child) {
-            return Column(
+        child: Column(
+          mainAxisAlignment: .center,
+          children: [
+            Row(
               mainAxisAlignment: .center,
               children: [
-                Row(
-                  mainAxisAlignment: .center,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        appData.disconnectFromServer(context);
-                      },
-                      child: Text("Disconnect")
-                    ),
-                    SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () {
-                        appData.testToken(context);
-                      },
-                      child: Text("Test Token")
-                    ),
-                  ],
+                TextButton(
+                  onPressed: () {
+                    appData.disconnectFromServer(context);
+                  },
+                  child: Text("Disconnect")
                 ),
-                SizedBox(height: 50),
-                Table(
-                  border: TableBorder.all(),
-                  defaultColumnWidth:IntrinsicColumnWidth(),
+                SizedBox(width: 10),
+                TextButton(
+                  onPressed: () {
+                    appData.testToken(context);
+                  },
+                  child: Text("Test Token")
+                ),
+              ],
+            ),
+            SizedBox(height: 50),
+            Expanded(
+              child: _UserManagement(),
+            )
+          ],
+        )
+      )
+    );
+  }
+}
+
+class _UserManagement extends StatefulWidget {
+  @override
+  State<StatefulWidget> createState() => _UserManagementState();
+}
+
+class _UserManagementState extends State<_UserManagement> {
+  @override
+  Widget build(BuildContext context) {
+    return Consumer<AppData>(
+      builder: (context, appData, child) {
+        return Column(
+          children: [
+            Table(
+              border: TableBorder.all(),
+              defaultColumnWidth:IntrinsicColumnWidth(),
+              children: [
+                const TableRow(
                   children: [
-                    const TableRow(
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("ID", style: TextStyle(fontWeight: .bold), textAlign: .center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Nickname", style: TextStyle(fontWeight: .bold), textAlign: .center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Email", style: TextStyle(fontWeight: .bold), textAlign: .center),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: Text("Actions", style: TextStyle(fontStyle: .italic), textAlign: .center),
+                    ),
+                  ]
+                ),
+                // Mostrar llista d'usuaris dinàmicament
+                if (appData.userList.isNotEmpty)
+                  ...appData.userList.map((user) {
+                    return TableRow(
                       children: [
                         Padding(
                           padding: EdgeInsets.all(8.0),
-                          child: Text("ID", style: TextStyle(fontWeight: .bold), textAlign: .center),
+                          child: Text(user['user_id'].toString(), textAlign: .center),
                         ),
                         Padding(
                           padding: EdgeInsets.all(8.0),
-                          child: Text("Nickname", style: TextStyle(fontWeight: .bold), textAlign: .center),
+                          child: Text(user['nickname'].toString(), textAlign: .center),
                         ),
                         Padding(
                           padding: EdgeInsets.all(8.0),
-                          child: Text("Email", style: TextStyle(fontWeight: .bold), textAlign: .center),
+                          child: Text(user['email'].toString(), textAlign: .center),
                         ),
-                        Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text("Actions", style: TextStyle(fontStyle: .italic), textAlign: .center),
+                        TextButton(
+                          onPressed: () {
+                            appData.eliminarUsuari(user['user_id'], context);
+                          },
+                          child: Text("Remove")
                         ),
-                      ]
-                    ),
-                    // Mostrar llista d'usuaris dinàmicament
-                    if (appData.userList.isNotEmpty)
-                      ...appData.userList.map((user) {
-                        return TableRow(
-                          children: [
-                            Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(user['user_id'].toString(), textAlign: .center),
-                            ),
-                            Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(user['nickname'].toString(), textAlign: .center),
-                            ),
-                            Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(user['email'].toString(), textAlign: .center),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                appData.eliminarUsuari(user['user_id'], context);
-                              },
-                              child: Text("Remove")
-                            ),
-                          ],
-                        );
-                      })
-                    else
-                      const TableRow(
-                        children: [
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text('No users found', textAlign: TextAlign.center),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text('No users found', textAlign: TextAlign.center),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text('No users found', textAlign: TextAlign.center),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text('No users found', textAlign: TextAlign.center),
-                          ),
-                        ],
+                      ],
+                    );
+                  })
+                else
+                  const TableRow(
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
                       ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: .center,
-                  children: [
-                    TextButton(
-                      onPressed: () {
-                        appData.listUsuaris(context);
-                      }, 
-                      child: Text("Update User List")
-                    ),
-                    SizedBox(width: 10),
-                    TextButton(
-                      onPressed: () {
-                        appData.afegirUsuari(context);
-                      }, child: Text("Add")
-                    ),
-                  ],
-                )
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      ),
+                      Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No users found', textAlign: TextAlign.center),
+                      ),
+                    ],
+                  ),
               ],
-            );
-          },
-        ),
-      ),
-    );
+            ),
+            Row(
+              mainAxisAlignment: .center,
+              children: [
+                TextButton(
+                  onPressed: () {
+                    appData.listUsuaris(context);
+                  }, 
+                  child: Text("Update User List")
+                ),
+                SizedBox(width: 10),
+                TextButton(
+                  onPressed: () {
+                    appData.afegirUsuari(context);
+                  }, child: Text("Add")
+                ),
+              ],
+            )
+          ],
+        );
+    });
   }
 }
