@@ -8,22 +8,20 @@ import 'package:http/http.dart' as http;
 import 'package:app_desktop/main_page.dart';
 
 class AppData extends ChangeNotifier {
-  String apiKey = "";
-  String settingsPath = "files/settings.json";
+  final settingsPath = "files/settings.json";
 
-  double textFieldWidth = 305;
-  double textFieldHeight = 40;
+  final textFieldWidth = 305.0;
+  final textFieldHeight = 40.0;
 
   List<dynamic> userList = [];
+  List<String> tagList = [];
+  List<String> selectedTagList = [];
 
   //================//
   // Peticions HTTP //
   //================//
   
   // POST api/admin/usuaris/login
-
-  // admin@domain.com
-  // admin123
   Future<void> connectToServer(String url, String email, String password, BuildContext context) async {
     if (!(url.isEmpty || email.isEmpty || password.isEmpty)) {
       // Preparar JSON
@@ -34,14 +32,14 @@ class AppData extends ChangeNotifier {
       String jsonString = jsonEncode(jsonData);
       
       // POST
-      String urlRequest = "$url/api/admin/usuaris/login";
+      final urlRequest = "$url/api/admin/usuaris/login";
       var jsonResponse = await _loadHttpPostByChunks(urlRequest, jsonString, null, context);
       if (jsonResponse != null && jsonResponse["status"] == "OK") {
         // Canviar a MainPage
         changeToMainPage(context);
 
         // Guardar dades de configuració
-        String apiKey = jsonResponse["data"]["token"];
+        final apiKey = jsonResponse["data"]["token"];
         saveSettingsData(apiKey, url, email, password);
         
         // Carregar llista d'usuaris
@@ -61,9 +59,9 @@ class AppData extends ChangeNotifier {
   Future<void> listUsuaris(BuildContext context) async {
     List<dynamic> list = [];
 
-    String apiKey = retrieveSettingsData('token');
-    String url = retrieveSettingsData('urlHTTP');
-    String urlRequest = "$url/api/admin/usuaris";
+    final apiKey = retrieveSettingsData('token');
+    final url = retrieveSettingsData('urlHTTP');
+    final urlRequest = "$url/api/admin/usuaris";
     
     // GET
     var response = await _loadHttpGetByChunks(urlRequest, apiKey, context);
@@ -81,11 +79,10 @@ class AppData extends ChangeNotifier {
   // POST api/admin/usuaris/logout
   Future<void> disconnectFromServer(BuildContext context) async {
     // Recuperar dades abans de netejar-les
-    String apiKey = retrieveSettingsData('token');
-    String url = retrieveSettingsData('urlHTTPS');
-    
+    final apiKey = retrieveSettingsData('token');
+    final url = retrieveSettingsData('urlHTTPS');
+    final urlRequest = "$url/api/admin/usuaris/logout";
 
-    String urlRequest = "$url/api/admin/usuaris/logout";
     var jsonResponse = await _loadHttpPostByChunks(urlRequest, "{}", apiKey, context);
     if (jsonResponse != null && jsonResponse["status"] == "OK") {
       showMessage(context, "Logout", "You have been successfully logged out.", Colors.green);
@@ -158,6 +155,24 @@ class AppData extends ChangeNotifier {
     } 
   }
 
+  // GET api/admin/tags
+  Future<void> listTags(BuildContext context) async {
+
+    String apiKey = retrieveSettingsData('token');
+    String url = retrieveSettingsData('urlHTTP');
+    String urlRequest = "$url/api/admin/tags";
+    
+    // GET
+    var response = await _loadHttpGetByChunks(urlRequest, apiKey, context);
+    if (response != null && response["status"] == "OK") {
+      tagList = response["data"];
+
+      notifyListeners();
+    } else {
+      showMessage(context, "Error", "Failed to retrieve tag list.", Colors.red);
+    }
+  }
+
   //======================//
   // Gestió settings.json //
   //======================//
@@ -190,6 +205,23 @@ class AppData extends ChangeNotifier {
     String settingsString = jsonEncode(settingsData);
     File(settingsPath).writeAsStringSync(settingsString);
 }
+
+  //================//
+  // Gestió de Tags //
+  //================//
+
+  // Seleccionar o Deseleccionar
+  void selectTag(bool? value, String tagName) {
+    if (value == true) {
+      selectedTagList.add(tagName);
+    } else {
+      selectedTagList.remove(tagName);
+    }
+  }
+
+  // Refrescar gràfic de barres
+  void refreshBarChart() {
+  }
 
   //====================//
   // Funcions Auxiliars //
@@ -226,7 +258,7 @@ class AppData extends ChangeNotifier {
       ),
     );
   }
-
+  
   // Missatge emergent per afegir un usuari
   Future<Map<String, dynamic>?> showAddUserMessage(BuildContext context) async {
     final TextEditingController controllerId = TextEditingController();
@@ -293,6 +325,7 @@ class AppData extends ChangeNotifier {
 
     return result;
   }
+  
   // Petició POST, amb o sense autenticació
   Future<Map<String, dynamic>?> _loadHttpPostByChunks(String url, String jsonString, String? apiKey, BuildContext context) async {
     try {
