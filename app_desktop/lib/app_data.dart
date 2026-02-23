@@ -14,8 +14,8 @@ class AppData extends ChangeNotifier {
   final textFieldHeight = 40.0;
 
   List<dynamic> userList = [];
-  List<String> tagList = [];
-  List<String> selectedTagList = [];
+  Map<String, int> tagList = {};
+  
 
   //================//
   // Peticions HTTP //
@@ -204,23 +204,6 @@ class AppData extends ChangeNotifier {
     };
     String settingsString = jsonEncode(settingsData);
     File(settingsPath).writeAsStringSync(settingsString);
-}
-
-  //================//
-  // Gestió de Tags //
-  //================//
-
-  // Seleccionar o Deseleccionar
-  void selectTag(bool? value, String tagName) {
-    if (value == true) {
-      selectedTagList.add(tagName);
-    } else {
-      selectedTagList.remove(tagName);
-    }
-  }
-
-  // Refrescar gràfic de barres
-  void refreshBarChart() {
   }
 
   //====================//

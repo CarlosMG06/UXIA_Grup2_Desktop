@@ -1,5 +1,4 @@
 import 'dart:math';
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -172,12 +171,13 @@ class _TagStats extends StatefulWidget {
 }
 
 class _TagStatsState extends State<_TagStats> {
-
-  late AppData appData;
+  
+  Map<String, int> selectedTags = // test data
+    {"cat": 2, "classroom": 12, "hallway": 7, "school": 9, "mundane": 3};
 
   @override
-  Widget build(Object context) {
-    AppData appData = Provider.of<AppData>(context, listen: true)
+  Widget build(BuildContext context) {
+    AppData appData = Provider.of<AppData>(context, listen: true);
 
     return Row(
       children: [
@@ -186,17 +186,43 @@ class _TagStatsState extends State<_TagStats> {
             mainAxisAlignment: .center,
             children: [
               if (appData.tagList.isNotEmpty)
-                ...appData.tagList.map((tagName) {
+                ...appData.tagList.entries.map((entry) {
                   bool? selectTag;
                   return CheckboxListTile(
                     value: selectTag, 
                     onChanged: (bool? newValue) {
-                      appData.selectTag(selectTag, tagName);
+                      if (newValue == true) {
+                        selectedTags[entry.key] = entry.value;
+                      } else {
+                        selectedTags.remove(entry.key);
+                      }
                     },
-                    title: Text(tagName),
+                    title: Text(entry.key),
                   );
                 })
-              else Text("No tags found.")
+              // else Text("No tags found."),
+              else 
+                ...selectedTags.entries.map((entry) {
+                  bool? selectTag = false;
+                  return CheckboxListTile(
+                    value: selectTag, 
+                    onChanged: (bool? newValue) {
+                       setState(() => selectTag = newValue);
+                      if (newValue == true) {
+                        selectedTags[entry.key] = entry.value;
+                      } else {
+                        selectedTags.remove(entry.key);
+                      }
+                    },
+                    title: Text(entry.key),
+                  );
+                }),
+              TextButton(
+                onPressed: () {
+                  appData.listTags(context);
+                },
+                child: Text("Update Tags List")
+              )
             ],
           ),
         ),
@@ -207,11 +233,21 @@ class _TagStatsState extends State<_TagStats> {
               BarChartData(
                 barTouchData: barTouchData,
                 titlesData: titlesData,
-                borderData: borderData,
-                barGroups: barGroups,
+                borderData: FlBorderData(show: false),
+                barGroups: selectedTags.entries.map((entry) {
+                  return BarChartGroupData(
+                    x: selectedTags.entries.toList().indexOf(entry),
+                    barRods: [
+                      BarChartRodData(
+                        toY: entry.value.toDouble(),
+                        gradient: _barsGradient,
+                      )
+                    ],
+                  );
+                }).toList(),
                 gridData: const FlGridData(show: false),
                 alignment: BarChartAlignment.spaceAround,
-                maxY: 20,
+                maxY: selectedTags.values.isEmpty ? 0 : selectedTags.values.reduce((a, b) => a > b ? a : b).toDouble()*1.5
               )
             )
           )
@@ -220,22 +256,23 @@ class _TagStatsState extends State<_TagStats> {
     );
   }
 
-  BarTouchData get barTouchData => BarTouchData(
-    enabled: false,
-    touchTooltipData: BarTouchTooltipData(
-      getTooltipColor: (group) => Colors.transparent,
-      tooltipPadding: EdgeInsets.zero,
-      tooltipMargin: 8,
-      getTooltipItem:(group, groupIndex, rod, rodIndex) {
-        return BarTooltipItem(
-          rod.toY.round().toString(),
-          const TextStyle(
-            color: Colors.cyan,
-            fontWeight: FontWeight.bold,
-          )
-        );
-      },
-    )
+  BarTouchData get barTouchData =>
+    BarTouchData(
+      enabled: false,
+      touchTooltipData: BarTouchTooltipData(
+        getTooltipColor: (group) => Colors.transparent,
+        tooltipPadding: EdgeInsets.zero,
+        tooltipMargin: 8,
+        getTooltipItem:(group, groupIndex, rod, rodIndex) {
+          return BarTooltipItem(
+            rod.toY.round().toString(),
+            const TextStyle(
+              color: Colors.cyan,
+              fontWeight: FontWeight.bold,
+            )
+          );
+        },
+      )
   );
 
   Widget getTitles(double value, TitleMeta meta) {
@@ -244,16 +281,7 @@ class _TagStatsState extends State<_TagStats> {
       fontWeight: FontWeight.bold,
       fontSize: 14,
     );
-    String text = switch (value.toInt()) {
-      0 => 'Mn',
-      1 => 'Te',
-      2 => 'Wd',
-      3 => 'Tu',
-      4 => 'Fr',
-      5 => 'St',
-      6 => 'Sn',
-      _ => '',
-    };
+    String text = selectedTags[selectedTags.keys.toList()[value.toInt()]].toString();
     return SideTitleWidget(
       meta: meta,
       space: 4,
@@ -282,10 +310,6 @@ class _TagStatsState extends State<_TagStats> {
     ),
   );
 
-  FlBorderData get borderData => FlBorderData(
-    show: false,
-  );
-
   LinearGradient get _barsGradient => LinearGradient(
     colors: [
       Colors.deepPurple,
@@ -294,77 +318,4 @@ class _TagStatsState extends State<_TagStats> {
     begin: Alignment.bottomCenter,
     end: Alignment.topCenter,
   );
-
-  List<BarChartGroupData> get barGroups => [
-    BarChartGroupData(
-      x: 0,
-      barRods: [
-        BarChartRodData(
-          toY: 8,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-    BarChartGroupData(
-      x: 1,
-      barRods: [
-        BarChartRodData(
-          toY: 10,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-    BarChartGroupData(
-      x: 2,
-      barRods: [
-        BarChartRodData(
-          toY: 14,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-    BarChartGroupData(
-      x: 3,
-      barRods: [
-        BarChartRodData(
-          toY: 15,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-    BarChartGroupData(
-      x: 4,
-      barRods: [
-        BarChartRodData(
-          toY: 13,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-    BarChartGroupData(
-      x: 5,
-      barRods: [
-        BarChartRodData(
-          toY: 10,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-    BarChartGroupData(
-      x: 6,
-      barRods: [
-        BarChartRodData(
-          toY: 16,
-          gradient: _barsGradient,
-        )
-      ],
-      showingTooltipIndicators: [0],
-    ),
-  ];
 }
