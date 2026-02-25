@@ -285,18 +285,22 @@ class _TagStatsState extends State<_TagStats> {
                   mainAxisAlignment: .spaceBetween,
                   children: [
                     Text(
-                      filteredCount > 0 
-                          ? filteredCount == totalTags 
-                              ? 'Showing all tags'
-                              : 'Showing $filteredCount / $totalTags tags' 
-                          : '',
+                      MediaQuery.of(context).size.width < 800
+                          ? ''
+                          : (filteredCount > 0 
+                              ? filteredCount == totalTags 
+                                  ? 'Showing all tags'
+                                  : 'Showing $filteredCount / $totalTags tags' 
+                              : ''),
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
                       ),
                     ),
                     Text(
-                      selectedCount > 0 ? '$selectedCount selected' : '',
+                      MediaQuery.of(context).size.width < 800 
+                          ? '' 
+                          : selectedCount > 0 ? '$selectedCount selected' : '',
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
