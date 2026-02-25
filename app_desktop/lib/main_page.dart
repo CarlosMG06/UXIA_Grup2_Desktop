@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -172,8 +173,20 @@ class _TagStats extends StatefulWidget {
 
 class _TagStatsState extends State<_TagStats> {
   
-  Map<String, int> selectedTags = // test data
-    {"cat": 2, "classroom": 12, "hallway": 7, "school": 9, "mundane": 3};
+  final List<Color> tagColorList = [Colors.blue, Colors.red, Colors.lime.shade700, Colors.green,
+    Colors.deepPurple.shade400, Colors.orange.shade700, Colors.purple.shade200, Colors.grey];
+  
+  late Map<String, int> selectedTags;
+  Map<String, bool> checkboxStates = {};
+  
+  // Llista ordenada de major a menor quantitat per al gràfic
+  List<MapEntry<String, int>> sortedEntries = [];
+
+  @override
+  void initState() {
+    super.initState();
+    selectedTags = LinkedHashMap<String, int>(); // LinkedHashMap per mantenir ordre de selecció
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,34 +200,53 @@ class _TagStatsState extends State<_TagStats> {
             children: [
               if (appData.tagList.isNotEmpty)
                 ...appData.tagList.entries.map((entry) {
-                  bool? selectTag;
                   return CheckboxListTile(
-                    value: selectTag, 
+                    value: checkboxStates[entry.key] ?? false, 
                     onChanged: (bool? newValue) {
-                      if (newValue == true) {
-                        selectedTags[entry.key] = entry.value;
-                      } else {
-                        selectedTags.remove(entry.key);
-                      }
+                      setState(() {
+                        checkboxStates[entry.key] = newValue ?? false;
+                        if (newValue == true) {
+                          selectedTags[entry.key] = entry.value;
+                        } else {
+                          selectedTags.remove(entry.key);
+                        }
+                        _updateSortedEntries();
+                      });
                     },
-                    title: Text(entry.key),
+                    title: Text(
+                      entry.key, 
+                      style: TextStyle(
+                        color: getColorForTag(entry.key), 
+                        fontWeight: selectedTags.containsKey(entry.key) ? FontWeight.bold : FontWeight.normal,
+                        )
+                      ),
+                    activeColor: getColorForTag(entry.key),
                   );
                 })
               // else Text("No tags found."),
               else 
-                ...selectedTags.entries.map((entry) {
-                  bool? selectTag = false;
+                ...appData.testTagList.entries.map((entry) {
                   return CheckboxListTile(
-                    value: selectTag, 
+                    value: checkboxStates[entry.key] ?? false, 
                     onChanged: (bool? newValue) {
-                       setState(() => selectTag = newValue);
-                      if (newValue == true) {
-                        selectedTags[entry.key] = entry.value;
-                      } else {
-                        selectedTags.remove(entry.key);
-                      }
+                      setState(() {
+                        checkboxStates[entry.key] = newValue ?? false;
+                        if (newValue == true) {
+                          selectedTags[entry.key] = entry.value;
+                        } else {
+                          selectedTags.remove(entry.key);
+                        }
+                        _updateSortedEntries();
+                      });
                     },
-                    title: Text(entry.key),
+                    title: Text(
+                      entry.key, 
+                      style: TextStyle(
+                        color: getColorForTag(entry.key), 
+                        fontWeight: selectedTags.containsKey(entry.key) ? FontWeight.bold : FontWeight.normal,
+                        )
+                      ),
+                    activeColor: getColorForTag(entry.key),
                   );
                 }),
               TextButton(
@@ -227,33 +259,66 @@ class _TagStatsState extends State<_TagStats> {
           ),
         ),
         Expanded(
+          flex: 2,
           child: Padding(
-            padding: EdgeInsetsGeometry.all(64.0),
+            padding: const EdgeInsetsGeometry.all(32.0),
             child: BarChart(
               BarChartData(
                 barTouchData: barTouchData,
                 titlesData: titlesData,
                 borderData: FlBorderData(show: false),
-                barGroups: selectedTags.entries.map((entry) {
+                barGroups: sortedEntries.asMap().entries.map((entry) {
+                  int index = entry.key;
+                  MapEntry<String, int> tagEntry = entry.value;
+
                   return BarChartGroupData(
-                    x: selectedTags.entries.toList().indexOf(entry),
+                    x: index,
                     barRods: [
                       BarChartRodData(
-                        toY: entry.value.toDouble(),
-                        gradient: _barsGradient,
+                        toY: tagEntry.value.toDouble(),
+                        color: getColorForTag(tagEntry.key),
                       )
                     ],
+                    showingTooltipIndicators: [0],
                   );
                 }).toList(),
-                gridData: const FlGridData(show: false),
+                gridData: const FlGridData(
+                  horizontalInterval: 2,
+                  drawVerticalLine: false,
+                ),
                 alignment: BarChartAlignment.spaceAround,
-                maxY: selectedTags.values.isEmpty ? 0 : selectedTags.values.reduce((a, b) => a > b ? a : b).toDouble()*1.5
+                maxY: maxY
               )
             )
           )
         )
       ]
     );
+  }
+
+  void _updateSortedEntries() {
+    sortedEntries = selectedTags.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+  }
+
+  Color? getColorForTag(String tagKey) {
+    List<String> selectedKeys = selectedTags.keys.toList();
+    int index = selectedKeys.indexOf(tagKey);
+    if (index == -1) return null;
+    return tagColorList[index % tagColorList.length];
+  }
+
+  double get maxY {
+    if (selectedTags.values.isEmpty) {
+      return 10;
+    }
+    int maxValue = 0;
+    for (int value in selectedTags.values) {
+      if (value > maxValue) {
+        maxValue = value;
+      }
+    }
+    return max(10, (maxValue / 5).ceil() * 5).toDouble();
   }
 
   BarTouchData get barTouchData =>
@@ -267,8 +332,8 @@ class _TagStatsState extends State<_TagStats> {
           return BarTooltipItem(
             rod.toY.round().toString(),
             const TextStyle(
-              color: Colors.cyan,
-              fontWeight: FontWeight.bold,
+              color: Colors.black,
+              fontWeight: FontWeight.w600,
             )
           );
         },
@@ -277,45 +342,52 @@ class _TagStatsState extends State<_TagStats> {
 
   Widget getTitles(double value, TitleMeta meta) {
     final style = TextStyle(
-      color: Colors.deepPurple,
-      fontWeight: FontWeight.bold,
+      color: Colors.black,
+      fontWeight: FontWeight.w600,
       fontSize: 14,
     );
-    String text = selectedTags[selectedTags.keys.toList()[value.toInt()]].toString();
+
+    int index = value.toInt();
+
+    if (index < 0 || index >= sortedEntries.length) {
+        return Container();
+    }
+
+    String text = sortedEntries[index].key;
     return SideTitleWidget(
       meta: meta,
       space: 4,
-      angle: pi/5,
+      angle: 0.0,
       child: Text(text, style: style),
     );
   }
 
-  FlTitlesData get titlesData => FlTitlesData(
-    show: true,
-    bottomTitles: AxisTitles(
-      sideTitles: SideTitles(
-        showTitles: true,
-        reservedSize: 30,
-        getTitlesWidget: getTitles,
+  FlTitlesData get titlesData => 
+    FlTitlesData(
+      show: true,
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 30,
+          interval: 1,
+          getTitlesWidget: getTitles,
+        ),
       ),
-    ),
-    leftTitles: const AxisTitles(
-      sideTitles: SideTitles(showTitles: false),
-    ),
-    topTitles: const AxisTitles(
-      sideTitles: SideTitles(showTitles: false),
-    ),
-    rightTitles: const AxisTitles(
-      sideTitles: SideTitles(showTitles: false),
-    ),
-  );
+      leftTitles: const AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          reservedSize: 30,
+          interval: 2,
+          maxIncluded: false,
+          minIncluded: false
+        ),
+      ),
+      topTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+      rightTitles: const AxisTitles(
+        sideTitles: SideTitles(showTitles: false),
+      ),
+    );
 
-  LinearGradient get _barsGradient => LinearGradient(
-    colors: [
-      Colors.deepPurple,
-      Colors.cyan,
-    ],
-    begin: Alignment.bottomCenter,
-    end: Alignment.topCenter,
-  );
 }

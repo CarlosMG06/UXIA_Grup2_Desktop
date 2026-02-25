@@ -15,6 +15,8 @@ class AppData extends ChangeNotifier {
 
   List<dynamic> userList = [];
   Map<String, int> tagList = {};
+  // test data
+  Map<String, int> testTagList = {"cat": 2, "classroom": 12, "hallway": 7, "school": 9, "mundane": 3, "city": 6, "mountain": 15, "beach": 4};
   
 
   //================//
