@@ -289,7 +289,7 @@ class _TagStatsState extends State<_TagStats> {
                           ? ''
                           : (filteredCount > 0 
                               ? filteredCount == totalTags 
-                                  ? 'Showing all tags'
+                                  ? 'Showing all $totalTags tags'
                                   : 'Showing $filteredCount / $totalTags tags' 
                               : ''),
                       style: TextStyle(
