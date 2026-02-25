@@ -174,7 +174,7 @@ class AppData extends ChangeNotifier {
     if (response != null && response["status"] == "OK") {
       list = response["data"];
       tagList = list.cast<String, int>();
-      print(tagList);
+
       notifyListeners();
     } else {
       showMessage(context, "Error", "Failed to retrieve tag list.", Colors.red);
