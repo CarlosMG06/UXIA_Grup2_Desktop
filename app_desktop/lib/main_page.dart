@@ -173,24 +173,77 @@ class _TagStats extends StatefulWidget {
 
 class _TagStatsState extends State<_TagStats> {
   
-  final List<Color> tagColorList = [Colors.blue, Colors.red, Colors.lime.shade700, Colors.green,
-    Colors.deepPurple.shade400, Colors.orange.shade700, Colors.purple.shade200, Colors.grey];
+  final List<Color> tagColorList = [Colors.blue, Colors.red, Colors.lime.shade600, Colors.green,
+    Colors.deepPurple.shade400, Colors.orange.shade700, Colors.purple.shade300, Colors.blueGrey.shade400];
+  final List<Color> tagBGColorList = [Colors.blue.shade100, Colors.red.shade100, Colors.lime.shade100, Colors.green.shade100,
+    Colors.indigo.shade100, Colors.deepOrange.shade100, Colors.purple.shade50, Colors.blueGrey.shade100];
   
   late Map<String, int> selectedTags;
+  final int maxSelectedTags = 12;
   Map<String, bool> checkboxStates = {};
   
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+  bool _showOnlySelected = false;
+
   // Llista ordenada de major a menor quantitat per al gràfic
   List<MapEntry<String, int>> sortedEntries = [];
 
   @override
   void initState() {
     super.initState();
-    selectedTags = LinkedHashMap<String, int>(); // LinkedHashMap per mantenir ordre de selecció
+    // LinkedHashMap per mantenir ordre de selecció
+    selectedTags = LinkedHashMap<String, int>();
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged() {
+    setState(() {
+      _searchQuery = _searchController.text.toLowerCase();
+    });
+  }
+
+  // Filtrar les tags segons la cerca 
+  List<MapEntry<String, int>> _getFilteredEntries(Map<String, int> map) {
+    Iterable<MapEntry<String, int>> entries = map.entries;
+
+    // Filtre de "només seleccionats"
+    if (_showOnlySelected) {
+      entries = entries.where((entry) => selectedTags.containsKey(entry.key));
+    }
+    
+    // Filtre de cerca
+    if (_searchQuery.isNotEmpty) {
+      entries = entries.where((entry) => 
+          entry.key.toLowerCase().contains(_searchQuery));
+    }
+    
+    return entries.toList();
   }
 
   @override
   Widget build(BuildContext context) {
     AppData appData = Provider.of<AppData>(context, listen: true);
+
+    // Determinar què llista fer servir
+    Map<String, int> tagList = appData.tagList.isNotEmpty 
+        ? appData.tagList 
+        : appData.testTagList;
+
+    // Obtenir llista filtrada
+    List<MapEntry<String, int>> filteredEntries = _getFilteredEntries(tagList);
+
+    // Info filtre
+    int totalTags = tagList.length;
+    int selectedCount = selectedTags.length;
+    int filteredCount = filteredEntries.length;
 
     return Row(
       children: [
@@ -198,62 +251,156 @@ class _TagStatsState extends State<_TagStats> {
           child: Column(
             mainAxisAlignment: .center,
             children: [
-              if (appData.tagList.isNotEmpty)
-                ...appData.tagList.entries.map((entry) {
-                  return CheckboxListTile(
-                    value: checkboxStates[entry.key] ?? false, 
-                    onChanged: (bool? newValue) {
-                      setState(() {
-                        checkboxStates[entry.key] = newValue ?? false;
-                        if (newValue == true) {
-                          selectedTags[entry.key] = entry.value;
-                        } else {
-                          selectedTags.remove(entry.key);
-                        }
-                        _updateSortedEntries();
-                      });
-                    },
-                    title: Text(
-                      entry.key, 
-                      style: TextStyle(
-                        color: getColorForTag(entry.key), 
-                        fontWeight: selectedTags.containsKey(entry.key) ? FontWeight.bold : FontWeight.normal,
-                        )
+              // Barra de cerca
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: Colors.grey)
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Cercar tags...',
+                      prefixIcon: const Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
                       ),
-                    activeColor: getColorForTag(entry.key),
-                  );
-                })
-              // else Text("No tags found."),
-              else 
-                ...appData.testTagList.entries.map((entry) {
-                  return CheckboxListTile(
-                    value: checkboxStates[entry.key] ?? false, 
-                    onChanged: (bool? newValue) {
-                      setState(() {
-                        checkboxStates[entry.key] = newValue ?? false;
-                        if (newValue == true) {
-                          selectedTags[entry.key] = entry.value;
-                        } else {
-                          selectedTags.remove(entry.key);
-                        }
-                        _updateSortedEntries();
-                      });
-                    },
-                    title: Text(
-                      entry.key, 
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    ),
+                  ),
+                ),
+              ),
+              
+              // Info filtre i Switch Només seleccionats
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: Row(
+                  mainAxisAlignment: .spaceBetween,
+                  children: [
+                    Text(
+                      filteredCount > 0 
+                          ? filteredCount == totalTags 
+                              ? 'Showing all tags'
+                              : 'Showing $filteredCount / $totalTags tags' 
+                          : '',
                       style: TextStyle(
-                        color: getColorForTag(entry.key), 
-                        fontWeight: selectedTags.containsKey(entry.key) ? FontWeight.bold : FontWeight.normal,
-                        )
+                        fontSize: 12,
+                        color: Colors.grey,
                       ),
-                    activeColor: getColorForTag(entry.key),
-                  );
-                }),
-              TextButton(
-                onPressed: () {
-                  appData.listTags(context);
-                },
-                child: Text("Update Tags List")
+                    ),
+                    Text(
+                      selectedCount > 0 ? '$selectedCount selected' : '',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    Row(
+                      mainAxisSize: .max,
+                      children: [
+                        Text(
+                          'Only Selected',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: _showOnlySelected ? Colors.blue : Colors.grey,
+                          ),
+                        ),
+                        Transform.scale(
+                          scale: 0.7,
+                          child: Switch(
+                            value: _showOnlySelected,
+                            onChanged: (value) {
+                              setState(() {
+                                _showOnlySelected = value;
+                              });
+                            },
+                            activeThumbColor: Colors.blue,
+                          ),
+                        )
+                      ],
+                    ),
+                  ]
+                )
+              ),
+
+              // Llista de tags amb scroll
+              Expanded(
+                child: filteredEntries.isEmpty
+                    ? Center(
+                        child: Text(
+                          _searchQuery.isEmpty 
+                              ? _showOnlySelected 
+                                  ? "No tags selected." 
+                                  : "No tags available." 
+                              : "No tags found with '$_searchQuery'",
+                          style: const TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: filteredEntries.length,
+                        itemBuilder: (context, index) {
+                          final entry = filteredEntries[index];
+                          return Center(
+                            child: CheckboxListTile(
+                            value: checkboxStates[entry.key] ?? false,
+                            onChanged: (bool? newValue) {
+                              setState(() {
+                                if (selectedTags.length >= maxSelectedTags && newValue == true) {
+                                  appData.showMessage(context, "Maximum Selected Tags Reached", "Please de-select another tag before selecting this one.", Colors.amber);
+                                } else {
+                                  checkboxStates[entry.key] = newValue ?? false;
+                                  
+                                  if (newValue == true) {
+                                    selectedTags[entry.key] = entry.value;
+                                  } else {
+                                    selectedTags.remove(entry.key);
+                                  }
+                                  
+                                  // Actualizar la llista ordenada en canviar els tags selccionats
+                                  _updateSortedEntries();
+                                }
+                              });
+                            },
+                            title: Text(
+                            entry.key, 
+                            style: TextStyle(
+                                color: getColorForTag(entry.key), 
+                                fontWeight: selectedTags.containsKey(entry.key) ? FontWeight.bold : FontWeight.normal,
+                              )
+                            ),
+                            activeColor: getColorForTag(entry.key),
+                            tileColor: getBGColorForTag(entry.key) ?? Colors.transparent
+                            )
+                          );
+                        },
+                      ),
+              ),
+
+              // Botó d'actualitzar
+              DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  border: Border.all(color: Colors.grey)
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        appData.listTags(context);
+                      },
+                      child: Text("Update Tags List")
+                    )
+                  )
+                )
               )
             ],
           ),
@@ -261,7 +408,12 @@ class _TagStatsState extends State<_TagStats> {
         Expanded(
           flex: 2,
           child: Padding(
-            padding: const EdgeInsetsGeometry.all(32.0),
+            padding: const EdgeInsetsGeometry.directional(
+              top: 64.0,
+              start: 16.0,
+              end: 16.0,
+              bottom: 32.0
+            ),
             child: BarChart(
               BarChartData(
                 barTouchData: barTouchData,
@@ -306,6 +458,12 @@ class _TagStatsState extends State<_TagStats> {
     int index = selectedKeys.indexOf(tagKey);
     if (index == -1) return null;
     return tagColorList[index % tagColorList.length];
+  }
+  Color? getBGColorForTag(String tagKey) {
+    List<String> selectedKeys = selectedTags.keys.toList();
+    int index = selectedKeys.indexOf(tagKey);
+    if (index == -1) return null;
+    return tagBGColorList[index % tagBGColorList.length];
   }
 
   double get maxY {
@@ -357,7 +515,7 @@ class _TagStatsState extends State<_TagStats> {
     return SideTitleWidget(
       meta: meta,
       space: 4,
-      angle: 0.0,
+      angle: pi/4,
       child: Text(text, style: style),
     );
   }

@@ -2,8 +2,22 @@ import 'package:app_desktop/app_data.dart';
 import 'package:flutter/material.dart';
 import 'package:app_desktop/login.dart';
 import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Establir mida mínima (per evitar textos solapats)
+  await windowManager.ensureInitialized();
+  WindowOptions windowOptions = WindowOptions(
+    minimumSize: Size(650, 800)
+  );
+
+  windowManager.waitUntilReadyToShow(windowOptions, () async {
+    await windowManager.show();
+    await windowManager.focus();
+  });
+
   runApp(
     ChangeNotifierProvider(
       create: (context) => AppData(),
@@ -26,7 +40,7 @@ class AppState extends State<App> {
         theme: ThemeData(
             colorScheme: .fromSeed(seedColor: Colors.cyan)
         ),
-        home: Login()
+        home: Login(),
     );
   }
 }

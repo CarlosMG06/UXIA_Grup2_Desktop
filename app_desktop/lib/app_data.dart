@@ -16,7 +16,10 @@ class AppData extends ChangeNotifier {
   List<dynamic> userList = [];
   Map<String, int> tagList = {};
   // test data
-  Map<String, int> testTagList = {"cat": 2, "classroom": 12, "hallway": 7, "school": 9, "mundane": 3, "city": 6, "mountain": 15, "beach": 4};
+  Map<String, int> testTagList = {
+    "cat": 2, "classroom": 12, "hallway": 7, "school": 9, 
+    "mundane": 3, "city": 6, "mountain": 15, "beach": 4,
+    "dog": 8, "bird": 16, "rabbit": 13, "fish": 11, "snake": 1};
   
 
   //================//
@@ -159,6 +162,7 @@ class AppData extends ChangeNotifier {
 
   // GET api/admin/tags
   Future<void> listTags(BuildContext context) async {
+    Map<String, dynamic> list = {};
 
     String apiKey = retrieveSettingsData('token');
     String url = retrieveSettingsData('urlHTTP');
@@ -167,8 +171,9 @@ class AppData extends ChangeNotifier {
     // GET
     var response = await _loadHttpGetByChunks(urlRequest, apiKey, context);
     if (response != null && response["status"] == "OK") {
-      tagList = response["data"];
-
+      list = response["data"];
+      tagList = list.cast<String, int>();
+      print(tagList);
       notifyListeners();
     } else {
       showMessage(context, "Error", "Failed to retrieve tag list.", Colors.red);
@@ -192,9 +197,13 @@ class AppData extends ChangeNotifier {
   }
   
   String retrieveSettingsData(String key) {
-    String settingsString = File(settingsPath).readAsStringSync();
-    Map<String, dynamic> settingsData = jsonDecode(settingsString);
-    return settingsData[key];
+    try {
+      String settingsString = File(settingsPath).readAsStringSync();
+      Map<String, dynamic> settingsData = jsonDecode(settingsString);
+      return settingsData[key];
+    } catch (e) {
+      return "";
+    }
   }
   
   void clearSettingsData() {
