@@ -47,8 +47,9 @@ class AppData extends ChangeNotifier {
         final apiKey = jsonResponse["data"]["token"];
         saveSettingsData(apiKey, url, email, password);
         
-        // Carregar llista d'usuaris
+        // Carregar llista d'usuaris i tags
         await listUsuaris(context);
+        await listTags(context);
       } else {
         showMessage(context, "Login Failed", "Invalid URL, email, or password.", Colors.red);
       }

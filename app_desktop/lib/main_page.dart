@@ -298,7 +298,7 @@ class _TagStatsState extends State<_TagStats> {
                       ),
                     ),
                     Text(
-                      MediaQuery.of(context).size.width < 800 
+                      MediaQuery.of(context).size.width < 1000 
                           ? '' 
                           : selectedCount > 0 ? '$selectedCount selected' : '',
                       style: TextStyle(
